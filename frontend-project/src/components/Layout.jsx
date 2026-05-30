@@ -48,11 +48,12 @@ export default function Layout() {
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         shadow-2xl
+        flex flex-col
       `}>
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">📦</span>
             </div>
             <div>
@@ -72,8 +73,8 @@ export default function Layout() {
         {user && (
           <div className="mx-4 mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-brand-500/20 rounded-full flex items-center justify-center">
-                <UserCircle size={24} className="text-brand-400" />
+              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <UserCircle size={24} className="text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user?.username}</p>
@@ -95,19 +96,19 @@ export default function Layout() {
                 flex items-center gap-3 px-4 py-3 rounded-xl
                 transition-all duration-200 group
                 ${isActive 
-                  ? 'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-lg shadow-brand-500/20' 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20' 
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }
               `}
             >
-              <link.icon size={20} className={`transition-transform group-hover:scale-110 ${sidebarOpen ? '' : 'lg:mx-auto'}`} />
+              <link.icon size={20} className="transition-transform group-hover:scale-110" />
               <span className="font-medium">{link.label}</span>
             </NavLink>
           ))}
         </nav>
 
         {/* Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 bg-slate-800/50">
+        <div className="p-4 border-t border-slate-700 bg-slate-800/50 mt-auto">
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
@@ -126,7 +127,7 @@ export default function Layout() {
         <header className="lg:hidden bg-white border-b border-slate-200 sticky top-0 z-10">
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-lg">📦</span>
               </div>
               <h2 className="text-lg font-bold text-slate-800">StockHub SMS</h2>
@@ -153,8 +154,8 @@ export default function Layout() {
             <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-sm text-slate-500">
               <span>© 2026 StockHub Ltd — Kigali, Rwanda</span>
               <div className="flex gap-4">
-                <span>📞 +250 788 123 456</span>
-                <span>✉️ support@stockhub.rw</span>
+                <span className="hover:text-slate-700 transition-colors">📞 +250 788 123 456</span>
+                <span className="hover:text-slate-700 transition-colors">✉️ support@stockhub.rw</span>
               </div>
             </div>
           </div>
