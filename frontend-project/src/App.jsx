@@ -7,6 +7,8 @@ import Warehouses from './pages/Warehouses';
 import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
 import Dashboard from './pages/Dashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { useAuth } from './context/AuthContext';
 
 const Protected = ({ children }) => {
@@ -19,6 +21,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/" element={<Protected><Layout /></Protected>}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />

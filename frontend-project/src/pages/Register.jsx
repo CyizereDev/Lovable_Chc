@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 export default function Register() {
-  const [form, setForm] = useState({ username: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [msg, setMsg] = useState(''); 
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,6 +21,13 @@ export default function Register() {
 
   const submit = async e => {
     e.preventDefault();
+    
+    // Validate email
+    if (!form.email || !form.email.includes('@')) {
+      setErr('Please enter a valid email address');
+      setTimeout(() => setErr(''), 3000);
+      return;
+    }
     
     // Validate passwords match
     if (form.password !== form.confirmPassword) {
@@ -41,6 +48,7 @@ export default function Register() {
     try {
       await api.post('/auth/register', {
         username: form.username,
+        email: form.email,
         password: form.password
       });
       setMsg('Account created successfully! Redirecting to login...');
@@ -141,6 +149,31 @@ export default function Register() {
                 </p>
               </div>
 
+              {/* Email Field */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg">
+                    📧
+                  </span>
+                  <input
+                    type="email"
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl 
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                             transition-all duration-200 bg-slate-50 hover:bg-white"
+                    placeholder="Enter your email"
+                    value={form.email}
+                    onChange={e => setForm({...form, email: e.target.value})}
+                    required
+                  />
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  We'll send verification and reset links to this email
+                </p>
+              </div>
+
               {/* Password Field */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -230,7 +263,7 @@ export default function Register() {
               >
                 {loading ? (
                   <>
-                    <span className="animate-spin">⏳</span>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Creating account...</span>
                   </>
                 ) : (
@@ -271,7 +304,7 @@ export default function Register() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideUp {
           from {
             opacity: 0;
@@ -316,6 +349,19 @@ export default function Register() {
         
         .animate-shake {
           animation: shake 0.5s ease-in-out;
+        }
+        
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>
