@@ -26,7 +26,9 @@ export default function Transactions() {
       setProducts(p.data);
       setWarehouses(w.data);
     } catch (error) {
-      setMsg({ type: 'error', text: 'Failed to load data' });
+      console.error('Load error:', error);
+      setMsg({ type: 'error', text: 'Failed to load data: ' + (error.response?.data?.message || error.message) });
+      setTimeout(() => setMsg({ type: '', text: '' }), 5000);
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,9 @@ export default function Transactions() {
       load();
       setTimeout(() => setMsg({ type: '', text: '' }), 3000);
     } catch (err) { 
-      setMsg({ type: 'error', text: '❌ ' + (err.response?.data?.message || 'Error saving transaction') });
+      console.error('Submit error:', err);
+      const errorMessage = err.response?.data?.message || 'Error saving transaction';
+      setMsg({ type: 'error', text: '❌ ' + errorMessage });
       setTimeout(() => setMsg({ type: '', text: '' }), 5000);
     } finally {
       setLoading(false);
@@ -176,8 +180,13 @@ export default function Transactions() {
 
       {/* Message Toast */}
       {msg.text && (
-        <div className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-xl shadow-lg animate-slideInRight
-                      ${msg.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+        <div 
+          className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-xl shadow-lg
+                      ${msg.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+          style={{
+            animation: 'slideInRight 0.3s ease-out'
+          }}
+        >
           <div className="flex items-center gap-2">
             <span>{msg.type === 'success' ? '✓' : '⚠'}</span>
             <span>{msg.text}</span>
@@ -359,7 +368,7 @@ export default function Transactions() {
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⏳</span>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Saving...</span>
                 </>
               ) : (
@@ -458,7 +467,7 @@ export default function Transactions() {
                   {filteredTransactions.map(transaction => (
                     <tr key={transaction.transactionId} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4 text-sm font-mono font-semibold text-slate-700">
-                        #{transaction.transactionId}
+                        #{transaction.transactionId.slice(-6)}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">
                         {new Date(transaction.transactionDate).toLocaleDateString()}
@@ -529,23 +538,6 @@ export default function Transactions() {
           </>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        
-        .animate-slideInRight {
-          animation: slideInRight 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

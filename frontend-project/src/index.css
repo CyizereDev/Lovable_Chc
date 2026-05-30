@@ -12,3 +12,27 @@ body { @apply bg-slate-50 text-slate-800; font-family: 'Segoe UI', sans-serif; }
 .table { @apply w-full text-sm text-left; }
 .table th { @apply bg-slate-100 px-3 py-2 font-semibold; }
 .table td { @apply px-3 py-2 border-t border-slate-100; }
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

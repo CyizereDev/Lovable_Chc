@@ -1,54 +1,91 @@
 const r = require('express').Router();
-const T = require('../models/StockTransaction');
+const Transaction = require('../models/Transaction');
 const Product = require('../models/Product');
 const Warehouse = require('../models/Warehouse');
 const auth = require('../middleware/auth');
 
-function range(period) {
-  const now = new Date();
-  const start = new Date(now); const end = new Date(now);
-  if (period === 'daily') { start.setHours(0,0,0,0); end.setHours(23,59,59,999); }
-  else if (period === 'weekly') {
-    const day = (now.getDay()+6)%7; // Monday start
-    start.setDate(now.getDate()-day); start.setHours(0,0,0,0);
-    end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
-  } else if (period === 'monthly') {
-    start.setDate(1); start.setHours(0,0,0,0);
-    end.setMonth(start.getMonth()+1, 0); end.setHours(23,59,59,999);
-  } else return null;
-  return { start, end };
-}
-
-async function enrich(list) {
-  const ps = await Product.find({ productCode: { $in: list.map(t=>t.productCode) } });
-  const ws = await Warehouse.find({ warehouseCode: { $in: list.map(t=>t.warehouseCode) } });
-  const pm = Object.fromEntries(ps.map(p=>[p.productCode,p.productName]));
-  const wm = Object.fromEntries(ws.map(w=>[w.warehouseCode,w.warehouseName]));
-  return list.map(t => ({
-    transactionDate: t.transactionDate?.toISOString().slice(0,10),
-    productName: pm[t.productCode] || t.productCode,
-    warehouseName: wm[t.warehouseCode] || t.warehouseCode,
-    quantityMoved: t.quantityMoved,
-  }));
-}
-
+// GET reports by period
 r.get('/:period', auth, async (req, res) => {
-  const rng = range(req.params.period);
-  if (!rng) return res.status(400).json({ message: 'Invalid period' });
-  const base = { transactionDate: { $gte: rng.start, $lte: rng.end } };
-  const [inList, outList, products] = await Promise.all([
-    T.find({ ...base, transactionType: 'IN' }).lean(),
-    T.find({ ...base, transactionType: 'OUT' }).lean(),
-    Product.find().lean(),
-  ]);
-  res.json({
-    stockIn: await enrich(inList),
-    stockOut: await enrich(outList),
-    available: products.map(p => ({
-      productCode: p.productCode, productName: p.productName,
-      quantityInStock: p.quantityInStock, unitPrice: p.unitPrice,
-    })),
-  });
+  try {
+    const period = req.params.period;
+    let dateFilter = {};
+    const now = new Date();
+    
+    // Set date filter based on period
+    if (period === 'daily') {
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      dateFilter = {
+        transactionDate: {
+          $gte: startOfDay,
+          $lte: endOfDay
+        }
+      };
+    } else if (period === 'weekly') {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 7);
+      dateFilter = { transactionDate: { $gte: weekAgo } };
+    } else if (period === 'monthly') {
+      const monthAgo = new Date(now);
+      monthAgo.setMonth(now.getMonth() - 1);
+      dateFilter = { transactionDate: { $gte: monthAgo } };
+    }
+    
+    console.log(`Fetching reports for period: ${period}`);
+    console.log('Date filter:', dateFilter);
+    
+    // Get all products for available stock
+    const available = await Product.find({}, 'productCode productName quantityInStock unitPrice')
+      .sort({ productName: 1 });
+    
+    // Get stock in transactions with proper population
+    const stockIn = await Transaction.find({ 
+      ...dateFilter, 
+      transactionType: 'IN' 
+    }).sort({ transactionDate: -1 });
+    
+    // Get stock out transactions with proper population
+    const stockOut = await Transaction.find({ 
+      ...dateFilter, 
+      transactionType: 'OUT' 
+    }).sort({ transactionDate: -1 });
+    
+    // Manually populate product and warehouse names
+    const formatTransactions = async (transactions) => {
+      const formatted = [];
+      for (const t of transactions) {
+        const product = await Product.findOne({ productCode: t.productCode });
+        const warehouse = await Warehouse.findOne({ warehouseCode: t.warehouseCode });
+        
+        formatted.push({
+          transactionDate: t.transactionDate,
+          productName: product ? product.productName : 'Unknown',
+          warehouseName: warehouse ? warehouse.warehouseName : 'Unknown',
+          quantityMoved: t.quantityMoved
+        });
+      }
+      return formatted;
+    };
+    
+    const formattedStockIn = await formatTransactions(stockIn);
+    const formattedStockOut = await formatTransactions(stockOut);
+    
+    res.json({
+      available: available.map(p => ({
+        productCode: p.productCode,
+        productName: p.productName,
+        quantityInStock: p.quantityInStock,
+        unitPrice: p.unitPrice
+      })),
+      stockIn: formattedStockIn,
+      stockOut: formattedStockOut
+    });
+  } catch (error) {
+    console.error('Error in reports:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 module.exports = r;

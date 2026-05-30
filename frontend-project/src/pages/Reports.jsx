@@ -16,9 +16,12 @@ export default function Reports() {
     try {
       const response = await api.get('/reports/' + period);
       setData(response.data);
+      setMsg({ type: 'success', text: 'Reports loaded successfully!' });
+      setTimeout(() => setMsg({ type: '', text: '' }), 2000);
     } catch (error) {
-      setMsg({ type: 'error', text: 'Failed to load reports' });
-      setTimeout(() => setMsg({ type: '', text: '' }), 3000);
+      console.error('Error loading reports:', error);
+      setMsg({ type: 'error', text: 'Failed to load reports: ' + (error.response?.data?.message || error.message) });
+      setTimeout(() => setMsg({ type: '', text: '' }), 5000);
     } finally {
       setLoading(false);
     }
@@ -51,17 +54,10 @@ export default function Reports() {
       if (col === 'transactionDate' && value) {
         return new Date(value).toLocaleDateString();
       }
+      if (value === undefined || value === null) {
+        return '-';
+      }
       return value;
-    };
-
-    const totalValue = col => {
-      if (col === 'quantityMoved') {
-        return rows.reduce((sum, r) => sum + (r[col] || 0), 0);
-      }
-      if (col === 'unitPrice') {
-        return rows.reduce((sum, r) => sum + (r[col] || 0), 0);
-      }
-      return null;
     };
 
     return (
@@ -77,9 +73,9 @@ export default function Reports() {
                 {rows.length} record{rows.length !== 1 ? 's' : ''} found
               </p>
             </div>
-            {rows.length > 0 && (
+            {rows.length > 0 && cols.includes('quantityMoved') && (
               <div className="text-sm bg-blue-50 px-3 py-1 rounded-lg">
-                Total: {totalValue('quantityMoved') || rows.length}
+                Total: {rows.reduce((sum, r) => sum + (r.quantityMoved || 0), 0)}
               </div>
             )}
           </div>
@@ -198,8 +194,13 @@ export default function Reports() {
 
       {/* Message Toast */}
       {msg.text && (
-        <div className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-xl shadow-lg animate-slideInRight
-                      ${msg.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+        <div 
+          className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-xl shadow-lg
+                      ${msg.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+          style={{
+            animation: 'slideInRight 0.3s ease-out'
+          }}
+        >
           <div className="flex items-center gap-2">
             <span>{msg.type === 'success' ? '✓' : '⚠'}</span>
             <span>{msg.text}</span>
@@ -304,50 +305,6 @@ export default function Reports() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes slideDown {
-          from {
-            transform: translateY(-20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        .animate-slideInRight {
-          animation: slideInRight 0.3s ease-out;
-        }
-        
-        .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
-        }
-        
-        @media print {
-          .fixed {
-            display: none;
-          }
-          button {
-            display: none;
-          }
-          body {
-            print-color-adjust: exact;
-          }
-        }
-      `}</style>
     </div>
   );
 }
