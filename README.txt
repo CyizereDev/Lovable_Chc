@@ -52,10 +52,7 @@ npm install
 cd frontend
 npm install
 
-4. Create .env file in backend:
-PORT=5000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_secret_key
+
 
 5. Run backend:
 npm run dev
